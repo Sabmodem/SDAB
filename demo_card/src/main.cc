@@ -1,0 +1,231 @@
+#include <SPI.h>
+#include <SD.h>
+
+#define CARD_CS      10
+#define bufsize      6
+
+String buf[bufsize]; // размер буфера вывода в строках
+String* curfile = nullptr; // указатель на строку с названием текущего файла
+
+struct fileContext {
+  /*
+     Контекст файла. Содержит открытый коренной каталог и сам файл,
+     а также методы для вывода и закрытия каталога и файла
+  */
+  File root;
+  File curfile;
+  void print() const {
+    Serial.print("root: ");
+    Serial.print(root.name());
+    Serial.print(" ; file: ");
+    Serial.println(curfile.name());
+
+  };
+  void close() {
+    curfile.close();
+    root.close();
+  };
+};
+
+File prevFile() { // Получить предыдущий файл. Если файл первый на диске, то возвращает его же
+  File root = SD.open("/");
+  File entry = root.openNextFile();
+  File result;
+  char count = 0;
+  while (!(String(entry.name()) == *curfile || !entry)) {
+    entry.close();
+    entry = root.openNextFile();
+    count++;
+  };
+  entry.close();
+  root.rewindDirectory();
+  for(char i = 0; i < count-1; i++) {
+    entry = root.openNextFile();
+    entry.close();
+  };
+  result = root.openNextFile();
+  root.close();
+  return result;
+};
+
+File nextFile() { // Получить следующий файл
+  File root = SD.open("/");
+  File entry;
+  String name;
+  File result;
+  do {
+    entry = root.openNextFile();
+    name = entry.name();
+    entry.close();
+  } while(name != *curfile);
+  result = root.openNextFile();
+  root.close();
+  return result;
+};
+
+fileContext curfileContext() { // Получить контекст текущего файла
+  fileContext ctx;
+  File root = SD.open("/");
+  File _prevFile = prevFile();
+  ctx.root = root;
+  if(*curfile == String(_prevFile.name())) {
+    root.openNextFile().close();
+    ctx.curfile = _prevFile;
+    return ctx;
+  };
+  File entry;
+  String name;
+  File result;
+  do {
+    entry = root.openNextFile();
+    name = String(entry.name());
+    entry.close();
+  } while(name != _prevFile.name() && name.length() != 0);
+  _prevFile.close();
+  result = root.openNextFile();
+  ctx.curfile = result;
+  return ctx;
+};
+
+File getFirstFile() { // Возвращает первый файл на диске
+  File root = SD.open("/");
+  File result = root.openNextFile();
+  root.close();
+  return result;
+};
+
+void fillFirstBuf() { // Заполняет буфер вывода названиями файлов
+  fileContext _curfileContext = curfileContext();
+  for(uint8_t i = 0; i < bufsize; i++) {
+    buf[i] = String(_curfileContext.curfile.name());
+    _curfileContext.curfile.close();
+    _curfileContext.curfile = _curfileContext.root.openNextFile();
+  };
+  _curfileContext.close();
+};
+
+void moveBufUp() { // Заполняет буфер вывода названиями файлов
+  for(uint8_t i = 0; i < bufsize-1; i++) {
+    buf[i] = buf[i+1];
+  };
+  File _nextFile = nextFile();
+  buf[bufsize-1] = _nextFile.name();
+  _nextFile.close();
+};
+
+
+void moveBufDown() {
+  for(uint8_t i = bufsize-1; i > 0; i--) {
+    buf[i] = buf[i-1];
+  };
+  File _prevFile = prevFile();
+  buf[0] = _prevFile.name();
+  _prevFile.close();
+};
+
+char curfilePosInBuf() { // Проверяет, существует ли текущий файл в буфере вывода
+  char index = -1;
+  for(uint8_t i = 0; i < 6; i++) {
+    if(buf[i] == *curfile) {
+      index = i;
+    };
+  };
+  return index;
+};
+
+void print() { // Напечатать буфер вывода в serial
+  char _curfilePosInBuf = curfilePosInBuf();
+  String* _curfile = nullptr;
+  if(_curfilePosInBuf != -1) {
+    _curfile = &buf[_curfilePosInBuf];
+    *_curfile += "    ###";
+  };
+  Serial.println("FILES:");
+  for(uint8_t i = 0; i < bufsize; i++) {
+    Serial.print(i);
+    Serial.print(" : ");
+    Serial.println(buf[i]);
+  };
+  if(_curfilePosInBuf != -1) {
+    _curfile->remove(_curfile->length() - 7, _curfile->length());
+  };
+
+  Serial.print("cur file: ");
+  Serial.println(*curfile);
+  Serial.print("next file: ");
+  File _nextFile = nextFile();
+  Serial.println(_nextFile.name());
+  _nextFile.close();
+  Serial.print("prev file: ");
+  File _prevFile = prevFile();
+  Serial.println(_prevFile.name());
+  _prevFile.close();
+  Serial.print("curfile context: ");
+  fileContext ctx = curfileContext();
+  ctx.print();
+  ctx.close();
+};
+
+void browserInit() { // инициализация
+  File _firstFile = getFirstFile();
+  curfile = new String(_firstFile.name());
+  fillFirstBuf();
+  print();
+  _firstFile.close();
+};
+
+void moveCurfileUp() {
+  File _nextFile = nextFile();
+  if(!_nextFile) {
+    _nextFile.close();
+    return;
+  };
+  if(curfilePosInBuf() == bufsize - 1) {
+    moveBufUp();
+  };
+  *curfile = _nextFile.name();
+  _nextFile.close();
+};
+
+void moveCurfileDown() {
+  File _prevFile = prevFile();
+  if(strcmp(_prevFile.name(), curfile->c_str()) == 0) {
+    _prevFile.close();
+    return;
+  };
+  if(curfilePosInBuf() == 0) {
+    moveBufDown();
+  };
+  *curfile = _prevFile.name();
+  _prevFile.close();
+};
+
+void buttonsHandler(char cmd) {
+  switch(cmd) {
+  case 'n':
+    moveCurfileUp();
+    print();
+    break;
+  case 'p':
+    moveCurfileDown();
+    print();
+    break;
+  };
+};
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Initializing SD card...");
+
+  if( !SD.begin( CARD_CS )){
+    Serial.println("initialization failed!");
+    return;
+  }
+  browserInit();
+}
+
+void loop() {
+  if(Serial.available()) {
+    buttonsHandler(Serial.read());
+  };
+}
