@@ -1,5 +1,7 @@
+#include "Arduino.h"
 #include <SPI.h>
 #include <SD.h>
+#include "reader.cc"
 #include "browser.h"
 #include "browser.cc"
 
@@ -24,10 +26,10 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Initializing SD card...");
 
-  if( !SD.begin( CARD_CS )){
-    Serial.println("initialization failed!");
-    return;
-  }
+  // if( !SD.begin( CARD_CS )){
+  //   Serial.println("initialization failed!");
+  //   return;
+  // }
   // browserInit();
   brw = new browser();
   // browser brw();

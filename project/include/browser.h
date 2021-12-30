@@ -1,4 +1,5 @@
 #define bufsize      6
+// static const char bufsize = 6;
 
 class browser {
  private:

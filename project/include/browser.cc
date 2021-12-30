@@ -1,7 +1,3 @@
-#include <Arduino.h>
-#include <SPI.h>
-#include <SD.h>
-
 void browser::fileContext::print() const {
   Serial.print("root: ");
   Serial.print(root.name());
@@ -63,28 +59,10 @@ void browser::print() { // Напечатать буфер вывода в seria
   ctx.close();
 };
 
-// void browser::printO() {
-//   for(uint8_t i = 0; i < bufsize; i++) {
-//     Serial.print(i);
-//     Serial.print(" : ");
-//     Serial.println(buf[i]);
-//   };
-// };
-
-void browser::printO() { // вывести страницу на экран
-  uint8_t Y = 10; // позиция Y строки на экране
-  u8g.setFont(rus6x10); // задаем шрифт
-  for(uint8_t curstr = 0; curstr < 6; curstr++) { // перебираем буфер
-    u8g.setPrintPos(0, Y); // переходим на нужную позицию
-    u8g.print(buf[curstr]); // выводим строку
-    Y += 10; // Переходим на новую позицию чтобы не затереть выведенные строки
-  };
-}
-
-
 File browser::getFirstFile() { // Возвращает первый файл на диске
   File root = SD.open("/");
-  File result = root.openNextFile();
+  // File result = root.openNextFile();
+  File result =  root.openNextFile();
   root.close();
   return result;
 };
@@ -224,5 +202,9 @@ String* browser::getCurfile() { // Получить контекст текущ�
 
 };
 String* browser::getBuf() { // Получить контекст текущего файла
-  return buf;
+  String _buf[bufsize];
+  for(char i = 0; i < bufsize; i++) {
+    _buf[i] = buf[i];
+  };
+  return _buf;
 };
