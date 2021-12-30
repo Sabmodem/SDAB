@@ -221,7 +221,6 @@ browser::fileContext browser::curfileContext() { // Получить конте�
 
 String* browser::getCurfile() { // Получить контекст текущего файла
   return curfile;
-
 };
 String* browser::getBuf() { // Получить контекст текущего файла
   return buf;

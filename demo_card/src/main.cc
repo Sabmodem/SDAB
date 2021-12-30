@@ -1,9 +1,11 @@
 #include "Arduino.h"
 #include <SPI.h>
 #include <SD.h>
-#include "reader.cc"
-#include "browser.h"
-#include "browser.cc"
+// #include "reader.cc"
+#include "browser.cpp"
+
+// #include "browser.h"
+// #include "browser.cc"
 
 #define CARD_CS      10
 

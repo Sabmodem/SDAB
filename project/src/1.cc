@@ -3,50 +3,42 @@
 
 #include <Arduino.h>
 #include <SD.h>
-#include "browser.h"
 #include "browser.cc"
-
-
-// void print(String* buf) { // вывести страницу на экран
-//   char Y = 10; // позиция Y строки на экране
-//   u8g.setFont(rus6x10); // задаем шрифт
-//   for(char curstr = 0; curstr < bufsize; curstr++) { // перебираем буфер
-//     u8g.setPrintPos(0, Y); // переходим на нужную позицию
-//     // Serial.println(buf[curstr]);
-//     u8g.print(buf[curstr]); // выводим строку
-//     Y += 10; // Переходим на новую позицию чтобы не затереть выведенные строки
-//   };
-// };
 
 U8GLIB_SH1106_128X64 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI
 
+browser* br = nullptr;
+char pos;
+
+void print() { // вывести страницу на экран
+  pos = br->curfilePosInBuf();
+  br->bufBeforePrint();
+  char Y = 10; // позиция Y строки на экране
+  u8g.setFont(rus6x10); // задаем шрифт
+  for(char curstr = 0; curstr < 6; curstr++) { // перебираем буфер
+    u8g.setPrintPos(0, Y); // переходим на нужную позицию
+    // Serial.println(buf[curstr]);
+    u8g.print(*br->buf[curstr]); // выводим строку
+    Y += 10; // Переходим на новую позицию чтобы не затереть выведенные строки
+  };
+  br->bufAfterPrint(pos);
+};
+
 void buttonsHandler(char cmd, browser* br) {
+  // char _curfilePosInBuf = br->curfilePosInBuf();
   switch (cmd) {
   case 'n': // Если нажата n
-    // rd->readPageForward(); // читаем вперед
-    // rd->print();
     br->moveCurfileUp(); // читаем вперед
     br->print();
+    // buf = br->getBuf();
     break;
   case 'p': // если нажата p
-    // rd->readPageBackward(); // читаем назад
-    // rd->print();
     br->moveCurfileDown(); // читаем вперед
     br->print();
-    break;
-  case 'w': // если нажата p
-    // rd->readPageBackward(); // читаем назад
-    // rd->print();
-    // U8GLIB_SH1106_128X64 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI
+    // buf = br->getBuf();
     break;
   };
 };
-
-// String buf[6];
-// browser* br = nullptr;
-// display* ds;
-
-
 
 void setup() {
   Serial.begin(9600);
@@ -69,37 +61,18 @@ void setup() {
   //   u8g.setHiColorByRGB(255,255,255);
   // }
 
-  // br = new browser();
-  browser br = browser();
-  for(char i = 0; i < 5; i++) {
-    br.moveCurfileUp();
-    br.print();
-  };
-  // ds = new display(6);
-
-  // br->moveCurfileUp();
-  // br->print();
-
-  // String* buf = br->getBuf();
-
-  // ds->print(buf);
-
-  // for(char i = 0; i < 6; i++) {
-  //   // Serial.println(buf[i]);
-  //   buff[i] = "##########";
-  // };
+  br = new browser();
 }
 
 void loop() {
-  // u8g.firstPage();
-  // // цикл вывода. Выводит страницами чтобы экономить память
-  // // НЕ ТРОГАТЬ, ИНАЧЕ СЛОМАЕТСЯ
-  // do {
-  //   // print(buff);
-  // } while( u8g.nextPage() );
-  // // ds->preparePages(buf);
-  // // ds.preparePages(buf);
-  // if(Serial.available()) {
-  //   buttonsHandler(Serial.read(), br);
-  // };
+  if(Serial.available()) {
+    buttonsHandler(Serial.read(), br);
+  };
+
+  u8g.firstPage();
+  // цикл вывода. Выводит страницами чтобы экономить память
+  // НЕ ТРОГАТЬ, ИНАЧЕ СЛОМАЕТСЯ
+  do {
+    print();
+  } while( u8g.nextPage() );
 };
