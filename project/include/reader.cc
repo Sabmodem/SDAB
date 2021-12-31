@@ -1,13 +1,13 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <SD.h>
-#include "U8glib.h"
-#include "rus6x10.h"
+// #include "U8glib.h"
+// #include "rus6x10.h"
 
 #define CARD_CS 10 // chip select sd-карты
 #define bufsize 6 // chip select sd-карты
 
-U8GLIB_SH1106_128X64 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI
+// U8GLIB_SH1106_128X64 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI
 
 class reader {
 private:
@@ -135,15 +135,15 @@ public:
     lastMoveDirection = 1; // записываем направление чтения
   };
 
-  void printO() { // вывести страницу на экран
-    uint8_t Y = 10; // позиция Y строки на экране
-    u8g.setFont(rus6x10); // задаем шрифт
-    for(uint8_t curstr = 0; curstr < 6; curstr++) { // перебираем буфер
-      u8g.setPrintPos(0, Y); // переходим на нужную позицию
-      u8g.print(buf[curstr]); // выводим строку
-      Y += 10; // Переходим на новую позицию чтобы не затереть выведенные строки
-    };
-  }
+  // void printO() { // вывести страницу на экран
+  //   uint8_t Y = 10; // позиция Y строки на экране
+  //   u8g.setFont(rus6x10); // задаем шрифт
+  //   for(uint8_t curstr = 0; curstr < 6; curstr++) { // перебираем буфер
+  //     u8g.setPrintPos(0, Y); // переходим на нужную позицию
+  //     u8g.print(buf[curstr]); // выводим строку
+  //     Y += 10; // Переходим на новую позицию чтобы не затереть выведенные строки
+  //   };
+  // }
 
   void print() { // вывести страницу на экран
     for(char i = 0; i < bufsize; i++) {

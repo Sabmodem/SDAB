@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include "browser.cc"
+#include "reader.cc"
 
 U8GLIB_SH1106_128X64 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI
 
