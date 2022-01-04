@@ -16,6 +16,7 @@ void buttonsHandler(char cmd, browser* br) {
       br->print();
     } else {
       rd->readPageForward();
+      rd->print();
     };
     // buf = br->getBuf();
     break;
@@ -25,6 +26,7 @@ void buttonsHandler(char cmd, browser* br) {
       br->print();
     } else {
       rd->readPageBackward();
+      rd->print();
     };
     // buf = br->getBuf();
     break;
