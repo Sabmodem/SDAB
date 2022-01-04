@@ -1,13 +1,9 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <SD.h>
-// #include "U8glib.h"
-// #include "rus6x10.h"
 
 #define CARD_CS 10 // chip select sd-карты
 #define bufsize 6 // chip select sd-карты
-
-// U8GLIB_SH1106_128X64 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI
 
 class reader {
 private:
@@ -17,17 +13,7 @@ private:
   bool lastMoveDirection; // направление предыдущего чтения. 0 - вперед, 1 - назад
 public:
   reader(String file) {
-    u8g.setFont(rus6x10); // задаем шрифт
-
-    Serial.begin(9600);
-    Serial.println("Initializing SD card...");
-
-    if( !SD.begin( CARD_CS )){ // включаем sd-карту
-      Serial.println("initialization failed!");
-      return;
-    };
-
-    myFile = SD.open(file.c_str());
+    myFile = SD.open(file);
     if (!myFile) {
       Serial.println("file open failed!");
       return;

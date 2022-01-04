@@ -218,8 +218,8 @@ public:
     return resultPointer;
   };
 
-  String* getCurfile() { // Получить контекст текущего файла
-    return curfile;
+  String getCurfile() { // Получить контекст текущего файла
+    return *curfile;
   };
 
   /* 2 последние функции это костыль для вывода буфера на дисплей.
