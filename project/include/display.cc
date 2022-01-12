@@ -10,11 +10,10 @@ private:
   char bufsize;
   String** buf;
 public:
-  display(char _bufsize, String** _buf, bool _state=true) {
+  display(char _bufsize, String** _buf) {
 
     bufsize = _bufsize;
     buf = _buf;
-    state = _state;
     u8g.setFont(rus6x10); // задаем шрифт
     if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
       u8g.setColorIndex(255);     // white

@@ -93,7 +93,7 @@ private:
   unsigned int seek; // количество считанных символов
   bool lastMoveDirection; // направление предыдущего чтения. 0 - вперед, 1 - назад
 public:
-  String buf[bufsize]; // Буфер дисплея. На этом шрифте помещается 6 строк
+  String buf[bufsize]; // размер буфера вывода в строках
 
   reader(String file) {
     myFile = SD.open(file.c_str());
@@ -315,10 +315,11 @@ public:
   };
 
   void clearBuf() {
-    return;
-    // for(uint8_t i = 0; i < bufsize; i++) {
-    // buf[i] = "";
-    // };
+    // return;
+    for(uint8_t i = 0; i < bufsize; i++) {
+      delete buf[i];
+      buf[i] = nullptr;
+    };
   };
 
   void moveBufUp() { // Заполняет буфер вывода названиями файлов

@@ -1,25 +1,28 @@
 #include "Arduino.h"
-#include <SPI.h>
 #include <SD.h>
-// #include "reader.cc"
-#include "browser.cpp"
+#include "reader.cc"
 
-// #include "browser.h"
-// #include "browser.cc"
+reader* rd = nullptr;
 
-#define CARD_CS      10
-
-browser* brw = nullptr;
-
-void buttonsHandler(char cmd, browser* brw) {
+void buttonsHandler(char cmd, reader* rd) {
   switch(cmd) {
   case 'n':
-    brw->moveCurfileUp();
-    brw->print();
+    // str = rd->readStringForward();
+    // Serial.println(*str);
+    // rd->print();
+    // delete str;
+
+    rd->readPageForward();
+    rd->print();
     break;
   case 'p':
-    brw->moveCurfileDown();
-    brw->print();
+    // str = rd->readStringBackward();
+    // Serial.println(*str);
+    // rd->print();
+    // delete str;
+
+    rd->readPageBackward();
+    rd->print();
     break;
   };
 };
@@ -28,18 +31,45 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Initializing SD card...");
 
-  // if( !SD.begin( CARD_CS )){
-  //   Serial.println("initialization failed!");
-  //   return;
-  // }
-  // browserInit();
-  brw = new browser();
-  // browser brw();
-  brw->print();
+  if( !SD.begin( 10 )){
+    Serial.println("initialization failed!");
+    return;
+  }
+
+  rd = new reader("1.txt");
+  for(char i = 0; i < 0; i++) {
+    Serial.print("I: ");
+    Serial.println(i, DEC);
+    // rd->readPageForward();
+    // rd->print();
+
+    Serial.print("I: ");
+    Serial.println(i, DEC);
+    String* str = nullptr;
+    str = rd->readStringForward();
+    Serial.println(*str);
+    rd->print();
+    delete str;
+  };
+
+  for(char i = 0; i < 0; i++) {
+    // Serial.print("I: ");
+    // Serial.println(i, DEC);
+    // rd->readPageBackward();
+    // rd->print();
+
+    Serial.print("I: ");
+    Serial.println(i, DEC);
+    String* str = nullptr;
+    str = rd->readStringBackward();
+    Serial.println(*str);
+    rd->print();
+    delete str;
+  };
 }
 
 void loop() {
   if(Serial.available()) {
-    buttonsHandler(Serial.read(), brw);
+    buttonsHandler(Serial.read(), rd);
   };
 }
