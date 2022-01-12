@@ -4,7 +4,7 @@
 #include <SD.h>
 
 #define CARD_CS 10 // chip select sd-карты
-#define bufsize_reader 6 // chip select sd-карты
+#define bufsize_reader 3 // chip select sd-карты
 #define bufsize_browser 6
 #define display_width 127
 
@@ -48,6 +48,7 @@ public:
       u8g.setFont(rus6x10); // задаем шрифт
       for(char curstr = 0; curstr < bufsize; curstr++) { // перебираем буфер
         u8g.setPrintPos(0, Y); // переходим на нужную позицию
+        // Serial.println(*buf[curstr]);
         u8g.print(*buf[curstr]); // выводим строку
         Y += 10; // Переходим на новую позицию чтобы не затереть выведенные строки
       };
@@ -73,12 +74,12 @@ public:
   reader(String file) {
     u8g.setFont(rus6x10); // задаем шрифт
 
-    // Serial.begin(9600);
-    // Serial.println("Initializing SD card...");
+    Serial.begin(9600);
+    Serial.println("Initializing SD card...");
 
     myFile = new File(SD.open(file.c_str()));
     if (!(*myFile)) {
-      // Serial.println("file open failed!");
+      Serial.println("file open failed!");
       return;
     };
     fillFirstBuf();
@@ -87,6 +88,7 @@ public:
   };
 
   ~reader() {
+    Serial.println("~reader");
     clearBuf();
     myFile->close();
     delete myFile;
@@ -162,27 +164,27 @@ public:
     lastMoveDirection = true; // записываем направление чтения
   };
 
-  // void print() { // вывести страницу на экран
-  //   for(char i = 0; i < bufsize_reader; i++) {
-  //     Serial.print(i, DEC);
-  //     Serial.print(" : ");
-  //     Serial.print(*buf[i]);
-  //     Serial.print(" ; length: ");
-  //     Serial.println(buf[i]->length());
-  //   };
-  //   // Serial.println();
-  //   // Serial.print("seek: ");
-  //   // Serial.print(seek, DEC);
-  //   // Serial.print(" ;lastMoveDirection: ");
-  //   // Serial.print(lastMoveDirection);
-  //   // Serial.print(" ;position: ");
-  //   // Serial.print(myFile->position());
-  //   // Serial.print(" ;available: ");
-  //   // Serial.print(myFile->available());
-  //   // Serial.print(" ;File(bool): ");
-  //   // Serial.println((bool)(*myFile));
-  //   Serial.println();
-  // };
+  void print() { // вывести страницу на экран
+    for(char i = 0; i < bufsize_reader; i++) {
+      Serial.print(i, DEC);
+      Serial.print(" : ");
+      Serial.print(*buf[i]);
+      Serial.print(" ; length: ");
+      Serial.println(buf[i]->length());
+    };
+    // Serial.println();
+    // Serial.print("seek: ");
+    // Serial.print(seek, DEC);
+    // Serial.print(" ;lastMoveDirection: ");
+    // Serial.print(lastMoveDirection);
+    // Serial.print(" ;position: ");
+    // Serial.print(myFile->position());
+    // Serial.print(" ;available: ");
+    // Serial.print(myFile->available());
+    // Serial.print(" ;File(bool): ");
+    // Serial.println((bool)(*myFile));
+    Serial.println();
+  };
 };
 
 class browser {
@@ -198,7 +200,7 @@ public:
     _firstFile->close();
     delete _firstFile;
     fillFirstBuf();
-    // print();
+    print();
   };
 
   ~browser() {
@@ -208,52 +210,52 @@ public:
     curfile = nullptr;
   };
 
-  // void print() { // Напечатать буфер вывода в serial
-  //   char _curfilePosInBuf = curfilePosInBuf();
-  //   String* _curfile = nullptr;
-  //   if(_curfilePosInBuf != -1) {
-  //     _curfile = buf[_curfilePosInBuf];
-  //     *_curfile += "    ###";
-  //   };
-  //   Serial.println("FILES:");
-  //   for(uint8_t i = 0; i < bufsize_browser; i++) {
-  //     Serial.print(i);
-  //     Serial.print(" : ");
-  //     Serial.println(*buf[i]);
-  //   };
-  //   if(_curfilePosInBuf != -1) {
-  //     _curfile->remove(_curfile->length() - 7, _curfile->length());
-  //   };
+  void print() { // Напечатать буфер вывода в serial
+    char _curfilePosInBuf = curfilePosInBuf();
+    String* _curfile = nullptr;
+    if(_curfilePosInBuf != -1) {
+      _curfile = buf[_curfilePosInBuf];
+      *_curfile += "    ###";
+    };
+    Serial.println("FILES:");
+    for(uint8_t i = 0; i < bufsize_browser; i++) {
+      Serial.print(i);
+      Serial.print(" : ");
+      Serial.println(*buf[i]);
+    };
+    if(_curfilePosInBuf != -1) {
+      _curfile->remove(_curfile->length() - 7, _curfile->length());
+    };
 
-  //   Serial.print("CURRENT FILE: ");
-  //   Serial.println(*curfile);
+    Serial.print("CURRENT FILE: ");
+    Serial.println(*curfile);
 
-  //   File* _nextFile = nextFile();
-  //   if(_nextFile)  {
-  //     Serial.print("NEXT FILE: ");
-  //     Serial.print(_nextFile->name());
-  //     Serial.print(" NEXT FILE(BOOL): ");
-  //     Serial.println((bool)_nextFile);
-  //     _nextFile->close();
-  //     delete _nextFile;
-  //   } else {
-  //     Serial.println("nextfile is null");
-  //   };
+    File* _nextFile = nextFile();
+    if(_nextFile)  {
+      Serial.print("NEXT FILE: ");
+      Serial.print(_nextFile->name());
+      Serial.print(" NEXT FILE(BOOL): ");
+      Serial.println((bool)_nextFile);
+      _nextFile->close();
+      delete _nextFile;
+    } else {
+      Serial.println("nextfile is null");
+    };
 
-  //   File* _prevFile = prevFile();
-  //   Serial.print("PREV FILE: ");
-  //   Serial.print(_prevFile->name());
-  //   Serial.print(" PREV FILE(BOOL): ");
-  //   Serial.println((bool)_prevFile);
-  //   _prevFile->close();
-  //   delete _prevFile;
+    File* _prevFile = prevFile();
+    Serial.print("PREV FILE: ");
+    Serial.print(_prevFile->name());
+    Serial.print(" PREV FILE(BOOL): ");
+    Serial.println((bool)_prevFile);
+    _prevFile->close();
+    delete _prevFile;
 
-  //   // fileContext* ctx = curfileContext();
-  //   // Serial.print("CUR FILE CTX: ");
-  //   // ctx->print();
-  //   // ctx->close();
-  //   // delete ctx;
-  // };
+    // fileContext* ctx = curfileContext();
+    // Serial.print("CUR FILE CTX: ");
+    // ctx->print();
+    // ctx->close();
+    // delete ctx;
+  };
 
   File* getFirstFile() { // Возвращает первый файл на диске
     File root = SD.open("/");
@@ -306,7 +308,7 @@ public:
   };
 
   void moveCurfileUp() {
-    // Serial.println("moveCurfileUp");
+    Serial.println("moveCurfileUp");
     File* _nextFile = nextFile();
     if(!_nextFile) {
       return;
@@ -406,5 +408,27 @@ public:
 
   String* getCurfile() { // Получить контекст текущего файла
     return curfile;
+  };
+
+  /* 2 последние функции это костыль для вывода буфера на дисплей.
+     Я никак не мог пометить текущий файл, поэтому пришлось сделать
+     вот так. Обязательно нужно исправить
+  */
+  void bufBeforePrint() {
+    char _curfilePosInBuf = curfilePosInBuf();
+    // Serial.println(_curfilePosInBuf, DEC);
+    String* _curfile = nullptr;
+    if(_curfilePosInBuf != -1) {
+      _curfile = buf[_curfilePosInBuf];
+      *_curfile += "    ###";
+    };
+  };
+
+  void bufAfterPrint(char pos) {
+    String* _curfile = nullptr;
+    if(pos != -1) {
+      _curfile = buf[pos];
+      _curfile->remove(_curfile->length() - 7, _curfile->length());
+    };
   };
 };

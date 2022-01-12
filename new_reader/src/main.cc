@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include <SD.h>
-#include "display.cc"
+#include "classes.cc"
 
 reader* rd = nullptr;
 display* ds = nullptr;
