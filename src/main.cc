@@ -14,6 +14,16 @@ bool state = true; // Режим работы устройства. 1 - брау
 
 unsigned long time = 0;
 
+void(* resetFunc) (void) = 0;
+/*
+  Функция для перезагрузки контроллера. Сбрасывает счетчик команд на ноль,
+  тем самым имитируя перезагрузку контроллера. Все настройки при этом
+  остаются теми же самыми. Используется при переходе из режима браузера в
+  режим читалки. На этом моменте, судя по всему, кончается память и
+  начинается всякая жопа. Поэтому я предпочел просто использовать такой
+  костыль. Может быть, исправлю в будущем
+*/
+
 char btn() {
   if(millis() - time < 1000) {
     return -1;
@@ -21,18 +31,14 @@ char btn() {
   char btn_state = 0;
   if(digitalRead(btn_a) == LOW) {
     btn_state = 1;
-    // Serial.println("Вниз");
   } else if(digitalRead(btn_b) == LOW) {
     btn_state = 2;
-    // Serial.println("ВВерх");
   } else if(digitalRead(btn_c) == LOW) {
     btn_state = 3;
-    // Serial.println("Выбор");
   }
   time = millis();
   return btn_state;
 }
-
 
 void buttonsHandler(char cmd) {
   switch (cmd) {
@@ -52,19 +58,20 @@ void buttonsHandler(char cmd) {
     break;
   case 3:
     if(state) {
-      String* file = new String(*br->getCurfile()); // Этот указатель используется в browser. Не удалять!
+      // String* file = new String(*br->getCurfile()); // Этот указатель используется в browser. Не удалять!
+      rd = new reader(*br->getCurfile());
       delete br;
       br = nullptr;
-      rd = new reader(*file);
       ds->setBufPtr(rd->buf);
       ds->setBufSize(6);
       state = !state;
     } else {
-      delete rd;
-      rd = nullptr;
-      br = new browser();
-      ds->setBufPtr(br->buf);
-      ds->setBufSize(6);
+      // delete rd;
+      // rd = nullptr;
+      // br = new browser();
+      // ds->setBufPtr(br->buf);
+      // ds->setBufSize(6);
+      resetFunc();
     };
     break;
   };
@@ -91,4 +98,4 @@ void loop() {
   } else {
     ds->printPage();
   };
-};
+}

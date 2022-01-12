@@ -64,7 +64,6 @@ public:
 class reader {
 private:
   File* myFile;
-  // String buf[bufsize_reader]; // Буфер дисплея. На этом шрифте помещается 6 строк
   unsigned char seek; // количество считанных символов
   bool lastMoveDirection; // направление предыдущего чтения. 0 - вперед, 1 - назад
 public:
@@ -72,16 +71,12 @@ public:
 
   reader(String file) {
     u8g.setFont(rus6x10); // задаем шрифт
-
-    // Serial.begin(9600);
-    // Serial.println("Initializing SD card...");
-
     myFile = new File(SD.open(file.c_str()));
     if (!(*myFile)) {
-      // Serial.println("file open failed!");
       return;
     };
     fillFirstBuf();
+    readPageForward();
     seek = 0;
     lastMoveDirection = false;
   };
@@ -161,28 +156,6 @@ public:
     };
     lastMoveDirection = true; // записываем направление чтения
   };
-
-  // void print() { // вывести страницу на экран
-  //   for(char i = 0; i < bufsize_reader; i++) {
-  //     Serial.print(i, DEC);
-  //     Serial.print(" : ");
-  //     Serial.print(*buf[i]);
-  //     Serial.print(" ; length: ");
-  //     Serial.println(buf[i]->length());
-  //   };
-  //   // Serial.println();
-  //   // Serial.print("seek: ");
-  //   // Serial.print(seek, DEC);
-  //   // Serial.print(" ;lastMoveDirection: ");
-  //   // Serial.print(lastMoveDirection);
-  //   // Serial.print(" ;position: ");
-  //   // Serial.print(myFile->position());
-  //   // Serial.print(" ;available: ");
-  //   // Serial.print(myFile->available());
-  //   // Serial.print(" ;File(bool): ");
-  //   // Serial.println((bool)(*myFile));
-  //   Serial.println();
-  // };
 };
 
 class browser {
@@ -191,69 +164,18 @@ private:
 public:
   String* buf[bufsize_browser]; // размер буфера вывода в строках
   browser() {
-    // Serial.println("constructor");
-    // buf = new String[bufsize_browser];
     File* _firstFile = getFirstFile();
     curfile = new String(_firstFile->name());
     _firstFile->close();
     delete _firstFile;
     fillFirstBuf();
-    // print();
   };
 
   ~browser() {
-    // Serial.println("destructor");
     clearBuf();
     delete curfile;
     curfile = nullptr;
   };
-
-  // void print() { // Напечатать буфер вывода в serial
-  //   char _curfilePosInBuf = curfilePosInBuf();
-  //   String* _curfile = nullptr;
-  //   if(_curfilePosInBuf != -1) {
-  //     _curfile = buf[_curfilePosInBuf];
-  //     *_curfile += "    ###";
-  //   };
-  //   Serial.println("FILES:");
-  //   for(uint8_t i = 0; i < bufsize_browser; i++) {
-  //     Serial.print(i);
-  //     Serial.print(" : ");
-  //     Serial.println(*buf[i]);
-  //   };
-  //   if(_curfilePosInBuf != -1) {
-  //     _curfile->remove(_curfile->length() - 7, _curfile->length());
-  //   };
-
-  //   Serial.print("CURRENT FILE: ");
-  //   Serial.println(*curfile);
-
-  //   File* _nextFile = nextFile();
-  //   if(_nextFile)  {
-  //     Serial.print("NEXT FILE: ");
-  //     Serial.print(_nextFile->name());
-  //     Serial.print(" NEXT FILE(BOOL): ");
-  //     Serial.println((bool)_nextFile);
-  //     _nextFile->close();
-  //     delete _nextFile;
-  //   } else {
-  //     Serial.println("nextfile is null");
-  //   };
-
-  //   File* _prevFile = prevFile();
-  //   Serial.print("PREV FILE: ");
-  //   Serial.print(_prevFile->name());
-  //   Serial.print(" PREV FILE(BOOL): ");
-  //   Serial.println((bool)_prevFile);
-  //   _prevFile->close();
-  //   delete _prevFile;
-
-  //   // fileContext* ctx = curfileContext();
-  //   // Serial.print("CUR FILE CTX: ");
-  //   // ctx->print();
-  //   // ctx->close();
-  //   // delete ctx;
-  // };
 
   File* getFirstFile() { // Возвращает первый файл на диске
     File root = SD.open("/");
@@ -276,7 +198,6 @@ public:
   };
 
   void clearBuf() {
-    // return;
     for(uint8_t i = 0; i < bufsize_browser; i++) {
       delete buf[i];
       buf[i] = nullptr;
@@ -322,11 +243,6 @@ public:
 
   void moveCurfileDown() {
     File* _prevFile = prevFile();
-    // if(strcmp(_prevFile->name(), curfile->c_str()) == 0) {
-    //   _prevFile->close();
-    //   delete _prevFile;
-    //   return;
-    // };
     if((curfilePosInBuf() == 0) && strcmp(curfile->c_str(), _prevFile->name()) != 0) {
       moveBufDown();
     };
@@ -350,17 +266,9 @@ public:
     File entry = root.openNextFile();
     char count = 0;
     File* result = nullptr;
-    // Serial.print("curfile name: ");
-    // Serial.println(*curfile);
     while ((strcmp(entry.name(), curfile->c_str()) != 0) && (entry)) {
       entry.close();
       entry = root.openNextFile();
-      // Serial.print("entry name: ");
-      // Serial.print(entry.name());
-      // Serial.print(" ; curfile name: ");
-      // Serial.print(*curfile);
-      // Serial.print(" ; condition: ");
-      // Serial.println(String(entry.name()) != *curfile && entry);
       count++;
     };
     entry.close();
@@ -378,22 +286,11 @@ public:
     File root = SD.open("/");
     File entry;
     String name;
-    // File* result = nullptr;
-
     File resultFile;
     File* resultPointer = nullptr;
-
-    // Serial.print("curfile name: ");
-    // Serial.println(*curfile);
     do {
       entry = root.openNextFile();
       name = entry.name();
-      // Serial.print("entry name: ");
-      // Serial.print(name);
-      // Serial.print(" ; curfile name: ");
-      // Serial.print(*curfile);
-      // Serial.print(" ; condition: ");
-      // Serial.println(strcmp(name.c_str(), curfile->c_str()) != 0);
       entry.close();
     } while(strcmp(name.c_str(), curfile->c_str()) != 0);
     resultFile = root.openNextFile();
