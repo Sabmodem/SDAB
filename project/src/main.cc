@@ -2,32 +2,55 @@
 #include <SD.h>
 #include "classes.cc"
 
+#define card_cs 10
+#define btn_a 3
+#define btn_b 4
+#define btn_c 5
+
 display* ds = nullptr;
 browser* br = nullptr;
 reader* rd = nullptr;
 bool state = true; // Режим работы устройства. 1 - браузер, 0 - читалка
 
-void buttonsHandler(char cmd, browser* br) {
+unsigned long time = 0;
+
+char btn() {
+  if(millis() - time < 1000) {
+    return -1;
+  };
+  char btn_state = 0;
+  if(digitalRead(btn_a) == LOW) {
+    btn_state = 1;
+    // Serial.println("Вниз");
+  } else if(digitalRead(btn_b) == LOW) {
+    btn_state = 2;
+    // Serial.println("ВВерх");
+  } else if(digitalRead(btn_c) == LOW) {
+    btn_state = 3;
+    // Serial.println("Выбор");
+  }
+  time = millis();
+  return btn_state;
+}
+
+
+void buttonsHandler(char cmd) {
   switch (cmd) {
-  case 'n': // Если нажата n
+  case 1:
     if(state) {
-      br->moveCurfileUp(); // читаем вперед
-      // br->print();
+      br->moveCurfileUp();
     } else {
       rd->readPageForward();
-      // rd->print();
     };
     break;
-  case 'p': // если нажата p
+  case 2:
     if(state) {
-      br->moveCurfileDown(); // читаем вперед
-      // br->print();
+      br->moveCurfileDown();
     } else {
       rd->readPageBackward();
-      // rd->print();
     };
     break;
-  case 's': // если нажата p
+  case 3:
     if(state) {
       String* file = new String(*br->getCurfile()); // Этот указатель используется в browser. Не удалять!
       delete br;
@@ -48,9 +71,11 @@ void buttonsHandler(char cmd, browser* br) {
 };
 
 void setup() {
-  Serial.begin(9600);
-  if( !SD.begin( 10 )){
-  //   Serial.println("initialization failed!");
+  pinMode(btn_a, INPUT_PULLUP);
+  pinMode(btn_b, INPUT_PULLUP);
+  pinMode(btn_c, INPUT_PULLUP);
+
+  if( !SD.begin( card_cs )){
     return;
   }
 
@@ -59,9 +84,7 @@ void setup() {
 }
 
 void loop() {
-  if(Serial.available()) {
-    buttonsHandler(Serial.read(), br);
-  };
+  buttonsHandler(btn());
 
   if(state) {
     ds->printDir(br->curfilePosInBuf());
