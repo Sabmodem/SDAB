@@ -2,17 +2,89 @@
 #include <SD.h>
 #include "classes.cc"
 
-#define card_cs 10
-#define btn_a 3
-#define btn_b 4
-#define btn_c 5
+#define bufsize_global 4
+
+#define card_cs 9
+// #define btn_a 3
+// #define btn_b 4
+// #define btn_c 5
+
+#define PIN_BUTTON_1 5
+#define PIN_BUTTON_2 3
+
+bool     button_state_1      = false;
+bool     button_state_2      = false;
+
+bool     button_long_state_1 = false;
+bool     button_long_state_2 = false;
+
+uint32_t ms_button_1 = 0;
+uint32_t ms_button_2 = 0;
+
+char btn_1_handler() {
+  uint32_t ms    = millis();
+  bool pin_state = digitalRead(PIN_BUTTON_1);
+  char cmd = -1;
+  // Фиксируем нажатие кнопки
+  if( pin_state  == LOW && !button_state_1 && ( ms - ms_button_1 ) > 50 ){
+    button_state_1      = true;
+    button_long_state_1 = false;
+    ms_button_1         = ms;
+  }
+  // Фиксируем длинное нажатие кнопки
+  if( pin_state  == LOW && !button_long_state_1 && ( ms - ms_button_1 ) > 1000 ){
+    button_long_state_1 = true;
+    // Serial.println("Выбор");
+    cmd = 3;
+  }
+  // Фиксируем отпускание кнопки
+  if( pin_state == HIGH && button_state_1 && ( ms - ms_button_1 ) > 50  ){
+    button_state_1      = false;
+    ms_button_1         = ms;
+    if( !button_long_state_1 ) {
+      // Serial.println("Вверх");
+      cmd = 2;
+    };
+  }
+  return cmd;
+};
+
+char btn_2_handler() {
+  uint32_t ms    = millis();
+  bool pin_state = digitalRead(PIN_BUTTON_2);
+  char cmd = -1;
+  // Фиксируем нажатие кнопки
+  if( pin_state  == LOW && !button_state_2 && ( ms - ms_button_2 ) > 50 ){
+    button_state_2      = true;
+    button_long_state_2 = false;
+    ms_button_2         = ms;
+  }
+  // Фиксируем длинное нажатие кнопки
+  if( pin_state  == LOW && !button_long_state_2 && ( ms - ms_button_2 ) > 1000 ){
+    button_long_state_2 = true;
+    // Serial.println("Заблокировать экран");
+    cmd = 4;
+  }
+  // Фиксируем отпускание кнопки
+  if( pin_state == HIGH && button_state_2 && ( ms - ms_button_2 ) > 50  ){
+    button_state_2      = false;
+    ms_button_2         = ms;
+    if( !button_long_state_2 ) {
+      // Serial.println("Вниз");
+      cmd = 1;
+    };
+  }
+  return cmd;
+};
+
 
 display* ds = nullptr;
 browser* br = nullptr;
 reader* rd = nullptr;
 bool state = true; // Режим работы устройства. 1 - браузер, 0 - читалка
+bool screenLocked = false;
 
-unsigned long time = 0;
+// unsigned long time = 0;
 
 void(* resetFunc) (void) = 0;
 /*
@@ -23,22 +95,6 @@ void(* resetFunc) (void) = 0;
   начинается всякая жопа. Поэтому я предпочел просто использовать такой
   костыль. Может быть, исправлю в будущем
 */
-
-char btn() {
-  if(millis() - time < 1000) {
-    return -1;
-  };
-  char btn_state = 0;
-  if(digitalRead(btn_a) == LOW) {
-    btn_state = 1;
-  } else if(digitalRead(btn_b) == LOW) {
-    btn_state = 2;
-  } else if(digitalRead(btn_c) == LOW) {
-    btn_state = 3;
-  }
-  time = millis();
-  return btn_state;
-}
 
 void buttonsHandler(char cmd) {
   switch (cmd) {
@@ -63,7 +119,7 @@ void buttonsHandler(char cmd) {
       delete br;
       br = nullptr;
       ds->setBufPtr(rd->buf);
-      ds->setBufSize(6);
+      ds->setBufSize(bufsize_global);
       state = !state;
     } else {
       // delete rd;
@@ -74,25 +130,38 @@ void buttonsHandler(char cmd) {
       resetFunc();
     };
     break;
+  case 4:
+    screenLocked = !screenLocked;
   };
 };
 
 void setup() {
-  pinMode(btn_a, INPUT_PULLUP);
-  pinMode(btn_b, INPUT_PULLUP);
-  pinMode(btn_c, INPUT_PULLUP);
+  // Serial.begin(9600);
+  // pinMode(btn_a, INPUT_PULLUP);
+  // pinMode(btn_b, INPUT_PULLUP);
+  // pinMode(btn_c, INPUT_PULLUP);
+
+  pinMode(PIN_BUTTON_1, INPUT_PULLUP);
+  pinMode(PIN_BUTTON_2, INPUT_PULLUP);
 
   if( !SD.begin( card_cs )){
+    // Serial.println("init fail");
     return;
   }
 
   br = new browser();
-  ds = new display(6, br->buf);
+  ds = new display(bufsize_global, br->buf);
 }
 
 void loop() {
-  buttonsHandler(btn());
+  // buttonsHandler(btn());
+  buttonsHandler(btn_1_handler());
+  buttonsHandler(btn_2_handler());
 
+  if(screenLocked) {
+    ds->printEmptyPage();
+    return;
+  }
   if(state) {
     ds->printDir(br->curfilePosInBuf());
   } else {

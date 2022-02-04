@@ -1,12 +1,13 @@
 #include "U8glib.h"
-#include "rus6x10.h"
+#include "rus10x20.h"
 #include <Arduino.h>
 #include <SD.h>
 
 #define CARD_CS 10 // chip select sd-карты
-#define bufsize_reader 6 // chip select sd-карты
-#define bufsize_browser 6
+#define bufsize_reader 4 // chip select sd-карты
+#define bufsize_browser 4
 #define display_width 127
+
 
 U8GLIB_SH1106_128X64 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI
 
@@ -18,7 +19,7 @@ public:
   display(char _bufsize, String** _buf) {
     bufsize = _bufsize;
     buf = _buf;
-    u8g.setFont(rus6x10); // задаем шрифт
+    u8g.setFont(rus10x20); // задаем шрифт
     if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
       u8g.setColorIndex(255);     // white
     }
@@ -44,12 +45,27 @@ public:
   void printPage() { // вывести страницу на экран
     u8g.firstPage();
     do {
-      char Y = 10; // позиция Y строки на экране
-      u8g.setFont(rus6x10); // задаем шрифт
+      char Y = 15; // позиция Y строки на экране
+      u8g.setFont(rus10x20); // задаем шрифт
       for(char curstr = 0; curstr < bufsize; curstr++) { // перебираем буфер
         u8g.setPrintPos(0, Y); // переходим на нужную позицию
         u8g.print(*buf[curstr]); // выводим строку
-        Y += 10; // Переходим на новую позицию чтобы не затереть выведенные строки
+        Y += 15; // Переходим на новую позицию чтобы не затереть выведенные строки
+      };
+    } while( u8g.nextPage() );
+  };
+
+  void printEmptyPage() { // вывести страницу на экран
+    u8g.firstPage();
+    do {
+      char Y = 15; // позиция Y строки на экране
+      u8g.setFont(rus10x20); // задаем шрифт
+      for(char curstr = 0; curstr < bufsize; curstr++) { // перебираем буфер
+        u8g.setPrintPos(0, Y); // переходим на нужную позицию
+        for(char i = 0; i < display_width; i++) {
+          u8g.print(" "); // выводим строку
+          Y += 15; // Переходим на новую позицию чтобы не затереть выведенные строки
+        }
       };
     } while( u8g.nextPage() );
   };
@@ -70,7 +86,7 @@ public:
   String* buf[bufsize_reader]; // Буфер дисплея. На этом шрифте помещается 6 строк
 
   reader(String file) {
-    u8g.setFont(rus6x10); // задаем шрифт
+    u8g.setFont(rus10x20); // задаем шрифт
     myFile = new File(SD.open(file.c_str()));
     if (!(*myFile)) {
       return;
